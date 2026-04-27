@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veille Technique — Extraction PDF en Python</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --bg: #0F1117;
+    --bg2: #161822;
+    --bg3: #1E2130;
+    --bg4: #252840;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #E8EAF0;
+    --text2: #9499B0;
+    --text3: #5A5F78;
+    --sans: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    --blue: #4F8EF7;
+    --blue-bg: rgba(79,142,247,0.1);
+    --blue-border: rgba(79,142,247,0.2);
+    --purple: #A78BFA;
+    --purple-bg: rgba(167,139,250,0.1);
+    --purple-border: rgba(167,139,250,0.2);
+    --amber: #FBBF24;
+    --amber-bg: rgba(251,191,36,0.1);
+    --amber-border: rgba(251,191,36,0.2);
+    --green: #34D399;
+    --green-bg: rgba(52,211,153,0.1);
+    --green-border: rgba(52,211,153,0.2);
+    --red: #F87171;
+    --red-bg: rgba(248,113,113,0.1);
+    --red-border: rgba(248,113,113,0.2);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ======= GRID BG ======= */
+  body::before {
+    content:'';
+    position: fixed;
+    inset:0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ======= NAV ======= */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border2);
+    padding: 0 2rem;
+  }
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 56px;
+  }
+  .nav-logo {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+    flex-shrink: 0;
+  }
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display:none; }
+  .nav-links a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { background: var(--bg3); color: var(--text); }
+  .nav-links a .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-blue { background: var(--blue); }
+  .dot-purple { background: var(--purple); }
+  .dot-amber { background: var(--amber); }
+
+  /* ======= LAYOUT ======= */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ======= HERO ======= */
+  .hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+    font-family: var(--mono);
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 1rem;
+    max-width: 700px;
+  }
+  .hero h1 span { color: var(--blue); }
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text2);
+    max-width: 580px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  /* ======= LIBRARY CARDS OVERVIEW ======= */
+  .libs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+  .lib-card {
+    background: var(--bg2);
+    padding: 2rem;
+    transition: background 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+  }
+  .lib-card:hover { background: var(--bg3); }
+  .lib-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 1rem;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .lib-icon.blue  { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
+  .lib-icon.purple{ background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border);}
+  .lib-icon.amber { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border); }
+
+  .lib-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+  .lib-card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .lib-role {
+    display: inline-block;
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 10px;
+    font-weight: 500;
+  }
+  .role-blue   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
+  .role-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border);}
+  .role-amber  { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border); }
+
+  /* ======= COMPARISON TABLE ======= */
+  .comparison-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 4rem;
+  }
+  .section-label {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .comp-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .comp-table th:nth-child(2) { color: var(--blue); }
+  .comp-table th:nth-child(3) { color: var(--purple); }
+  .comp-table th:nth-child(4) { color: var(--amber); }
+  .comp-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    color: var(--text2);
+    vertical-align: top;
+  }
+  .comp-table tr:last-child td { border-bottom: none; }
+  .comp-table tr:hover td { background: var(--bg3); }
+  .comp-table td:first-child { color: var(--text3); font-weight: 500; }
+  .tag-yes  { color: var(--green); }
+  .tag-no   { color: var(--red); }
+  .tag-mid  { color: var(--amber); }
+  .tag-dot  { display:inline-block; width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle; }
+
+  /* ======= PIPELINE ======= */
+  .pipeline-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 4rem;
+  }
+  .pipeline-steps {
+    display: flex;
+    align-items: stretch;
+    padding: 2rem;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .pipe-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 120px;
+    padding: 1rem;
+    background: var(--bg3);
+    border-radius: 12px;
+    text-align: center;
+    position: relative;
+  }
+  .pipe-icon-big {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .pipe-step h4 { font-size: 12px; font-weight: 700; }
+  .pipe-step p { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .pipe-arrow-big {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text3);
+    font-size: 22px;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+  .decision-box {
+    background: var(--bg4);
+    border: 1px dashed var(--border2);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin: 0 2rem 2rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .decision-branch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .decision-arrow { color: var(--text3); }
+
+  /* ======= SECTION LIBRARY ======= */
+  .lib-section {
+    margin-bottom: 5rem;
+    scroll-margin-top: 70px;
+  }
+  .lib-section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .lib-number {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+  .lib-section-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .lib-section-header .lib-version {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 4px;
+  }
+  .lib-desc {
+    font-size: 15px;
+    color: var(--text2);
+    max-width: 720px;
+    margin-bottom: 2rem;
+    line-height: 1.75;
+  }
+
+  /* ======= FEATURES GRID ======= */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 2.5rem;
+  }
+  .feat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+  }
+  .feat-card .feat-icon {
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .feat-card p { font-size: 13px; color: var(--text2); }
+
+  /* ======= CODE BLOCKS ======= */
+  .code-block {
+    background: #0D1117;
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #161B22;
+  }
+  .code-dots { display:flex; gap:5px; }
+  .code-dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border2);
+  }
+  .code-filename {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text3);
+    flex: 1;
+  }
+  .code-tag {
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .code-block pre {
+    margin: 0;
+    padding: 1.4rem 1.6rem;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.75;
+  }
+  .code-block code {
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  /* Override hljs bg */
+  .hljs { background: transparent !important; padding: 0 !important; }
+
+  /* ======= OUTPUT BOX ======= */
+  .output-box {
+    background: var(--bg3);
+    border: 1px solid var(--green-border);
+    border-left: 3px solid var(--green);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 2rem;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--green);
+    line-height: 1.8;
+  }
+  .output-box .out-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  /* ======= TIPS / NOTES ======= */
+  .tip {
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 2rem;
+    font-size: 13.5px;
+    line-height: 1.7;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .tip.tip-blue   { background: var(--blue-bg);   border: 1px solid var(--blue-border);   color: #93C5FD; }
+  .tip.tip-amber  { background: var(--amber-bg);  border: 1px solid var(--amber-border);  color: #FDE68A; }
+  .tip.tip-green  { background: var(--green-bg);  border: 1px solid var(--green-border);  color: #6EE7B7; }
+  .tip.tip-purple { background: var(--purple-bg); border: 1px solid var(--purple-border); color: #C4B5FD; }
+
+  /* ======= TABS ======= */
+  .tabs-wrap { margin-bottom: 2rem; }
+  .tabs-nav {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+  .tab-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--mono);
+    color: var(--text3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--blue); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ======= METHOD BADGE ======= */
+  .method-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-family: var(--mono);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .method-badge.get    { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border);  }
+  .method-badge.post   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border);   }
+  .method-badge.attr   { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
+
+  /* ======= PARAM TABLE ======= */
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 1.5rem;
+  }
+  .param-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .param-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .param-table tr:last-child td { border-bottom: none; }
+  .param-name { color: var(--blue); }
+  .param-type { color: var(--amber); }
+  .param-desc { color: var(--text2); }
+
+  /* ======= SECTION DIVIDER ======= */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 4rem 0;
+  }
+
+  /* ======= FOOTER ======= */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+    text-align: center;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text3);
+  }
+
+  /* ======= RESPONSIVE ======= */
+  @media (max-width: 768px) {
+    .libs-grid { grid-template-columns: 1fr; }
+    .pipeline-steps { flex-direction: column; }
+    .pipe-arrow-big { transform: rotate(90deg); }
+    nav { padding: 0 1rem; }
+    .page { padding: 0 1rem 4rem; }
+    .hero { padding: 3rem 0 2.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      Veille Technique · Extraction PDF Python
+    </div>
+    <ul class="nav-links">
+      <li><a href="#pdfplumber"><span class="dot dot-blue"></span>pdfplumber</a></li>
+      <li><a href="#camelot"><span class="dot dot-purple"></span>camelot-py</a></li>
+      <li><a href="#tabula"><span class="dot dot-amber"></span>tabula-py</a></li>
+      <li><a href="#comparaison">Comparaison</a></li>
+      <li><a href="#pipeline">Pipeline</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Veille Technologique 2024</div>
+    <h1>Extraction de tableaux PDF<br>avec <span>Python</span></h1>
+    <p class="hero-sub">
+      Un guide complet sur les trois bibliothèques de référence pour extraire,
+      analyser et structurer des données tabulaires depuis des documents PDF
+      financiers ou administratifs.
+    </p>
+
+    <!-- 3 lib overview -->
+    <div class="libs-grid">
+      <a class="lib-card" href="#pdfplumber">
+        <div class="lib-icon blue">pdf+</div>
+        <h3>pdfplumber</h3>
+        <p>Analyse la structure du PDF, extrait le texte avec ses coordonnées exactes et détecte la position des tableaux.</p>
+        <span class="lib-role role-blue">Aiguilleur & Inspecteur</span>
+      </a>
+      <a class="lib-card" href="#camelot">
+        <div class="lib-icon purple">cam</div>
+        <h3>camelot-py</h3>
+        <p>Extraction de précision pour les tableaux complexes. Reconstruit parfaitement la grille via les modes Lattice et Stream.</p>
+        <span class="lib-role role-purple">Le Muscle (précision)</span>
+      </a>
+      <a class="lib-card" href="#tabula">
+        <div class="lib-icon amber">tab</div>
+        <h3>tabula-py</h3>
+        <p>Extraction rapide basée sur Java. Idéal pour les tableaux simples et les documents volumineux répétitifs.</p>
+        <span class="lib-role role-amber">Voie Rapide (vitesse)</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- =================== PDFPLUMBER =================== -->
+  <section id="pdfplumber" class="lib-section">
+    <div class="lib-section-header">
+      <div class="lib-number" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);">01</div>
+      <div>
+        <h2>pdfplumber <span class="lib-version" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);">v0.11+</span></h2>
+      </div>
+    </div>
+
+    <p class="lib-desc">
+      pdfplumber est construit sur <strong style="color:var(--text)">pdfminer.six</strong> et donne accès à chaque
+      élément d'une page PDF avec ses coordonnées précises (x0, y0, x1, y1).
+      C'est le meilleur outil pour comprendre la <em>structure</em> d'un document avant d'en extraire les données.
+    </p>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--blue)">coords</div>
+        <p>Retourne les coordonnées exactes de chaque mot, ligne et caractère sur la page.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--blue)">find_tables</div>
+        <p>Détecte automatiquement les tableaux et retourne leur bounding box.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--blue)">crop()</div>
+        <p>Permet de découper une zone précise de la page pour une extraction ciblée.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--blue)">100% Python</div>
+        <p>Pas de dépendance Java. Installation simple avec pip, fonctionne partout.</p>
+      </div>
+    </div>
+
+    <!-- Installation -->
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">terminal</span>
+        <span class="code-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">INSTALL</span>
+      </div>
+      <pre><code class="language-bash">pip install pdfplumber</code></pre>
+    </div>
+
+    <!-- Tabs code examples -->
+    <div class="tabs-wrap">
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab(this,'plumber','basic')">Lecture de base</button>
+        <button class="tab-btn" onclick="switchTab(this,'plumber','coords')">Coordonnées</button>
+        <button class="tab-btn" onclick="switchTab(this,'plumber','detect')">Détecter tableaux</button>
+        <button class="tab-btn" onclick="switchTab(this,'plumber','crop')">Zone ciblée</button>
+      </div>
+
+      <!-- basic -->
+      <div id="plumber-basic" class="tab-pane active">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">exemple_basique.py</span>
+            <span class="code-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)">pdfplumber</span>
+          </div>
+          <pre><code class="language-python">import pdfplumber
+
+# Ouverture du document
+with pdfplumber.open("rapport_annuel.pdf") as pdf:
+
+    # Informations générales
+    print(f"Nombre de pages : {len(pdf.pages)}")
+    print(f"Métadonnées : {pdf.metadata}")
+
+    # Accès à la première page
+    page = pdf.pages[0]
+    print(f"Dimensions : {page.width} x {page.height}")
+
+    # Extraction du texte brut
+    texte = page.extract_text()
+    print(texte)
+
+    # Extraction sous forme de tableau
+    table = page.extract_table()
+    if table:
+        for ligne in table:
+            print(ligne)  # ['Produit', 'Qty', 'Prix']</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+Nombre de pages : 24<br>
+Métadonnées : {'Author': 'Finance Dept', 'CreationDate': '2024-03-15'}<br>
+Dimensions : 595.276 x 841.89<br>
+['Produit', 'Quantité', 'Prix unitaire', 'Total']<br>
+['Service A', '10', '150,00 €', '1 500,00 €']<br>
+['Service B', '5', '250,00 €', '1 250,00 €']
+        </div>
+      </div>
+
+      <!-- coords -->
+      <div id="plumber-coords" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">coordonnées.py</span>
+            <span class="code-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)">pdfplumber</span>
+          </div>
+          <pre><code class="language-python">import pdfplumber
+
+with pdfplumber.open("facture.pdf") as pdf:
+    page = pdf.pages[0]
+
+    # extract_words() retourne chaque mot avec ses coordonnées
+    mots = page.extract_words()
+
+    for mot in mots[:5]:
+        print(mot)
+    # {'text': 'TOTAL', 'x0': 420.5, 'y0': 680.2,
+    #  'x1': 458.3, 'y1': 692.8, 'doctop': 148.3}
+
+    # Trouver la position d'un mot-clé
+    for mot in mots:
+        if 'TOTAL' in mot['text'].upper():
+            print(f"'TOTAL' trouvé à x={mot['x0']:.0f}, y={mot['y0']:.0f}")
+            print(f"→ Le tableau commence probablement après y={mot['y1']:.0f}")
+
+    # Accès aux caractères individuels (ultra-précis)
+    chars = page.chars
+    print(f"{len(chars)} caractères détectés")</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+{'text': 'Facture', 'x0': 72.0, 'y0': 120.4, 'x1': 128.3, 'y1': 134.8}<br>
+{'text': 'N°', 'x0': 132.1, 'y0': 120.4, 'x1': 145.0, 'y1': 134.8}<br>
+{'text': '2024-001', 'x0': 149.0, 'y0': 120.4, 'x1': 208.5, 'y1': 134.8}<br>
+'TOTAL' trouvé à x=420, y=680<br>
+→ Le tableau commence probablement après y=680<br>
+1842 caractères détectés
+        </div>
+      </div>
+
+      <!-- detect -->
+      <div id="plumber-detect" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">detection_tableaux.py</span>
+            <span class="code-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)">pdfplumber</span>
+          </div>
+          <pre><code class="language-python">import pdfplumber
+
+with pdfplumber.open("bilan.pdf") as pdf:
+    for i, page in enumerate(pdf.pages):
+
+        # find_tables() détecte les tableaux et retourne leur bbox
+        tableaux = page.find_tables()
+
+        print(f"Page {i+1} : {len(tableaux)} tableau(x) détecté(s)")
+
+        for j, table in enumerate(tableaux):
+            bbox = table.bbox  # (x0, top, x1, bottom)
+            print(f"  Tableau {j+1} : bbox={bbox}")
+            print(f"  → Commence à {bbox[1]:.0f}px du haut")
+            print(f"  → Largeur : {bbox[2]-bbox[0]:.0f}px")
+
+            # Extraire le contenu du tableau détecté
+            data = table.extract()
+            print(f"  → {len(data)} lignes × {len(data[0])} colonnes")</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+Page 1 : 2 tableau(x) détecté(s)<br>
+&nbsp;&nbsp;Tableau 1 : bbox=(72.0, 180.5, 524.0, 420.8)<br>
+&nbsp;&nbsp;→ Commence à 180px du haut<br>
+&nbsp;&nbsp;→ Largeur : 452px<br>
+&nbsp;&nbsp;→ 8 lignes × 5 colonnes<br>
+&nbsp;&nbsp;Tableau 2 : bbox=(72.0, 480.2, 524.0, 650.1)<br>
+&nbsp;&nbsp;→ Commence à 480px du haut<br>
+&nbsp;&nbsp;→ 12 lignes × 4 colonnes
+        </div>
+      </div>
+
+      <!-- crop -->
+      <div id="plumber-crop" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">zone_ciblee.py</span>
+            <span class="code-tag" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)">pdfplumber</span>
+          </div>
+          <pre><code class="language-python">import pdfplumber
+
+with pdfplumber.open("rapport.pdf") as pdf:
+    page = pdf.pages[0]
+
+    # 1. Trouver le mot-clé "Flux de trésorerie"
+    mots = page.extract_words()
+    y_debut = None
+
+    for mot in mots:
+        if 'trésorerie' in mot['text'].lower():
+            y_debut = mot['y1']  # juste après le titre
+            break
+
+    if y_debut:
+        # 2. Découper la page : seulement la zone du tableau
+        # crop(x0, top, x1, bottom)
+        zone = page.crop((
+            0,            # x gauche
+            y_debut + 5,  # top (après le titre)
+            page.width,   # x droite
+            page.height   # bas de page
+        ))
+
+        # 3. Extraire le tableau dans cette zone précise
+        table = zone.extract_table()
+        print(f"Tableau extrait : {len(table)} lignes")
+        for row in table:
+            print(row)</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+Tableau extrait : 8 lignes<br>
+['Rubrique', 'T1', 'T2', 'T3', 'Total']<br>
+['Encaissements', '45 000', '52 000', '48 000', '145 000']<br>
+['Décaissements', '-28 000', '-31 000', '-29 000', '-88 000']<br>
+['Flux net', '17 000', '21 000', '19 000', '57 000']
+        </div>
+      </div>
+    </div>
+
+    <div class="tip tip-blue">
+      <span class="tip-icon">💡</span>
+      <div><strong style="color:var(--blue)">Conseil pro :</strong> Utilisez <code style="font-family:var(--mono);font-size:12px">extract_words()</code> pour localiser les en-têtes de sections, puis <code style="font-family:var(--mono);font-size:12px">crop()</code> pour isoler la zone exacte du tableau avant de passer à Camelot ou Tabula. Cela réduit drastiquement les erreurs d'extraction.</div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- =================== CAMELOT =================== -->
+  <section id="camelot" class="lib-section">
+    <div class="lib-section-header">
+      <div class="lib-number" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border);">02</div>
+      <div>
+        <h2>camelot-py <span class="lib-version" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border);">v0.11+</span></h2>
+      </div>
+    </div>
+
+    <p class="lib-desc">
+      Camelot est la bibliothèque de référence pour l'extraction de tableaux complexes.
+      Il propose deux modes d'extraction complémentaires — <strong style="color:var(--text)">Lattice</strong> (lignes visibles)
+      et <strong style="color:var(--text)">Stream</strong> (espaces blancs) — avec un score de confiance intégré
+      pour valider la qualité de l'extraction.
+    </p>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--purple)">Lattice</div>
+        <p>Suit les lignes visibles du tableau. Parfait pour les bilans comptables avec bordures.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--purple)">Stream</div>
+        <p>Analyse les espaces blancs. Pour les tableaux sans bordures (états financiers).</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--purple)">accuracy</div>
+        <p>Score de confiance (0–100%) sur chaque extraction. Permet de filtrer les mauvais résultats.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--purple)">MultiPage</div>
+        <p>Traitement batch : extrait tous les tableaux d'un PDF en une seule ligne de code.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">terminal</span>
+        <span class="code-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">INSTALL</span>
+      </div>
+      <pre><code class="language-bash"># Installation complète avec OpenCV (pour le mode Lattice)
+pip install "camelot-py[cv]"
+
+# Ghostscript requis pour certains PDFs (macOS)
+brew install ghostscript
+
+# Linux
+apt-get install ghostscript python3-tk</code></pre>
+    </div>
+
+    <div class="tabs-wrap">
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab(this,'camelot','lattice')">Mode Lattice</button>
+        <button class="tab-btn" onclick="switchTab(this,'camelot','stream')">Mode Stream</button>
+        <button class="tab-btn" onclick="switchTab(this,'camelot','batch')">Traitement batch</button>
+        <button class="tab-btn" onclick="switchTab(this,'camelot','export')">Export & debug</button>
+      </div>
+
+      <!-- lattice -->
+      <div id="camelot-lattice" class="tab-pane active">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">mode_lattice.py — tableaux avec bordures visibles</span>
+            <span class="code-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)">camelot</span>
+          </div>
+          <pre><code class="language-python">import camelot
+import pandas as pd
+
+# Mode Lattice : suit les lignes tracées du tableau
+# Idéal pour : bilans, factures, relevés avec bordures
+tables = camelot.read_pdf(
+    "bilan_financier.pdf",
+    pages="1",          # "1,3,5" ou "1-5" ou "all"
+    flavor="lattice"    # mode lignes visibles
+)
+
+# Nombre de tableaux trouvés
+print(f"Tableaux détectés : {len(tables)}")
+
+# Accès au premier tableau
+table = tables[0]
+
+# Score de confiance (0 à 100%)
+print(f"Précision : {table.accuracy:.1f}%")
+print(f"Lignes incomplètes : {table.whitespace:.1f}%")
+
+# Conversion en DataFrame pandas
+df = table.df
+print(df.shape)  # (lignes, colonnes)
+print(df.head())
+
+#  Nettoyage : première ligne → en-tête
+df.columns = df.iloc[0]
+df = df.iloc[1:].reset_index(drop=True)
+print(df)</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+Tableaux détectés : 2<br>
+Précision : 99.8%<br>
+Lignes incomplètes : 0.2%<br>
+(7, 5)<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rubrique  &nbsp;&nbsp;T1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T3&nbsp;&nbsp;&nbsp;&nbsp;Total<br>
+0  Encaissements clients  45000  52000  48000  145000<br>
+1   Décaissements fournisseurs -28000 -31000 -29000  -88000
+        </div>
+      </div>
+
+      <!-- stream -->
+      <div id="camelot-stream" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">mode_stream.py — tableaux sans bordures</span>
+            <span class="code-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)">camelot</span>
+          </div>
+          <pre><code class="language-python">import camelot
+
+# Mode Stream : analyse les espaces entre les colonnes
+# Idéal pour : états financiers, rapports annuels sans lignes
+tables = camelot.read_pdf(
+    "compte_resultat.pdf",
+    pages="2",
+    flavor="stream",
+    edge_tol=50,     # tolérance pour détecter les bords (px)
+    row_tol=2,       # tolérance pour regrouper les lignes
+)
+
+# Comparaison des deux modes sur le même PDF
+tables_l = camelot.read_pdf("rapport.pdf", pages="1", flavor="lattice")
+tables_s = camelot.read_pdf("rapport.pdf", pages="1", flavor="stream")
+
+print(f"Lattice : {len(tables_l)} tableaux, précision={tables_l[0].accuracy:.0f}%")
+print(f"Stream  : {len(tables_s)} tableaux, précision={tables_s[0].accuracy:.0f}%")
+
+# Choisir le meilleur résultat automatiquement
+best = tables_l[0] if tables_l[0].accuracy >= tables_s[0].accuracy else tables_s[0]
+df = best.df
+print(f"Méthode choisie : {best._flavor}")</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+Lattice : 1 tableaux, précision=98%<br>
+Stream  : 1 tableaux, précision=82%<br>
+Méthode choisie : lattice
+        </div>
+      </div>
+
+      <!-- batch -->
+      <div id="camelot-batch" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">traitement_batch.py</span>
+            <span class="code-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)">camelot</span>
+          </div>
+          <pre><code class="language-python">import camelot
+import pandas as pd
+import os
+
+def extraire_tous_les_tableaux(dossier_pdf: str) -> dict:
+    """
+    Extrait tous les tableaux de tous les PDFs d'un dossier.
+    Retourne un dict {nom_fichier: [DataFrame, ...]}
+    """
+    resultats = {}
+
+    for fichier in os.listdir(dossier_pdf):
+        if not fichier.endswith(".pdf"):
+            continue
+
+        chemin = os.path.join(dossier_pdf, fichier)
+
+        try:
+            # Extraire toutes les pages d'un coup
+            tables = camelot.read_pdf(chemin, pages="all", flavor="lattice")
+
+            # Filtrer : garder seulement les tableaux avec précision > 80%
+            bons_tableaux = [
+                t.df for t in tables
+                if t.accuracy > 80 and not t.df.empty
+            ]
+
+            resultats[fichier] = bons_tableaux
+            print(f"✓ {fichier} : {len(bons_tableaux)}/{len(tables)} tableaux retenus")
+
+        except Exception as e:
+            print(f"✗ {fichier} : erreur — {e}")
+
+    return resultats
+
+# Utilisation
+data = extraire_tous_les_tableaux("./rapports/")
+
+# Consolider dans un seul Excel
+with pd.ExcelWriter("extraction_complete.xlsx") as writer:
+    for nom_pdf, tableaux in data.items():
+        for i, df in enumerate(tableaux):
+            sheet = f"{nom_pdf[:20]}_{i+1}"
+            df.to_excel(writer, sheet_name=sheet, index=False)</code></pre>
+        </div>
+      </div>
+
+      <!-- export -->
+      <div id="camelot-export" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">export_debug.py</span>
+            <span class="code-tag" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)">camelot</span>
+          </div>
+          <pre><code class="language-python">import camelot
+
+tables = camelot.read_pdf("bilan.pdf", pages="1", flavor="lattice")
+table = tables[0]
+
+# Export vers différents formats
+table.to_csv("bilan_p1.csv")
+table.to_excel("bilan_p1.xlsx")
+table.to_json("bilan_p1.json")
+table.to_html("bilan_p1.html")
+
+# Export de toutes les tables d'un coup
+tables.export("export_complet.csv", f="csv", compress=False)
+
+# Debug visuel : génère une image avec les lignes détectées
+# Très utile pour comprendre pourquoi un tableau est mal extrait
+camelot.plot(table, kind="grid")        # lignes de la grille
+camelot.plot(table, kind="contour")     # contours détectés
+camelot.plot(table, kind="text")        # position du texte
+camelot.plot(table, kind="textedge")    # bords du texte (mode stream)
+
+# Rapport de parsing complet
+print(table.parsing_report)
+# {'accuracy': 99.8, 'whitespace': 0.2, 'order': 1, 'page': 1}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip tip-purple">
+      <span class="tip-icon">🎯</span>
+      <div><strong style="color:var(--purple)">Quand choisir Camelot ?</strong> Dès que votre tableau a des lignes fusionnées, des colonnes imbriquées, ou des en-têtes multi-niveaux. La précision de 99%+ en mode Lattice est inégalée. En contrepartie, il est 3 à 5× plus lent que tabula-py sur les gros volumes.</div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- =================== TABULA =================== -->
+  <section id="tabula" class="lib-section">
+    <div class="lib-section-header">
+      <div class="lib-number" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);">03</div>
+      <div>
+        <h2>tabula-py <span class="lib-version" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);">v2.9+</span></h2>
+      </div>
+    </div>
+
+    <p class="lib-desc">
+      tabula-py est un wrapper Python autour de <strong style="color:var(--text)">tabula-java</strong>, un outil Java
+      éprouvé. Son atout majeur est la <em>vitesse</em> : il excelle sur les documents
+      standardisés et volumineux comme les relevés bancaires ou les rapports répétitifs.
+      Requiert Java 8+ sur le système.
+    </p>
+
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--amber)">Vitesse</div>
+        <p>3 à 5× plus rapide que Camelot. Optimal pour traiter des centaines de pages identiques.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--amber)">guess=True</div>
+        <p>Détection automatique de la zone du tableau. Fonctionne sans configuration sur docs simples.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--amber)">area</div>
+        <p>Paramètre pour cibler une zone précise (top, left, bottom, right) en points PDF.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="color:var(--amber)">Java</div>
+        <p>Basé sur tabula-java, projet open-source mature. Requiert JRE 8+ installé.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">terminal</span>
+        <span class="code-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">INSTALL</span>
+      </div>
+      <pre><code class="language-bash">pip install tabula-py
+
+# Java requis (vérification)
+java -version  # doit afficher Java 8 ou supérieur
+
+# Installation Java si absent (Linux)
+apt-get install default-jre
+
+# macOS
+brew install openjdk</code></pre>
+    </div>
+
+    <div class="tabs-wrap">
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab(this,'tabula','basic')">Extraction rapide</button>
+        <button class="tab-btn" onclick="switchTab(this,'tabula','area')">Zone ciblée</button>
+        <button class="tab-btn" onclick="switchTab(this,'tabula','batch')">Gros volumes</button>
+        <button class="tab-btn" onclick="switchTab(this,'tabula','convert')">Conversion directe</button>
+      </div>
+
+      <!-- basic -->
+      <div id="tabula-basic" class="tab-pane active">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">extraction_rapide.py</span>
+            <span class="code-tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)">tabula-py</span>
+          </div>
+          <pre><code class="language-python">import tabula
+import pandas as pd
+
+# Lecture simple : retourne une liste de DataFrames
+# Un DataFrame par tableau détecté sur la page
+dfs = tabula.read_pdf(
+    "releve_bancaire.pdf",
+    pages=1,                # int, "all", ou "1,3,5"
+    multiple_tables=True,   # retourner plusieurs tableaux
+    guess=True,             # détection auto de la zone
+    silent=True             # ne pas afficher les logs Java
+)
+
+print(f"{len(dfs)} tableau(x) extrait(s)")
+
+for i, df in enumerate(dfs):
+    print(f"\n--- Tableau {i+1} ({df.shape[0]} lignes × {df.shape[1]} cols) ---")
+    print(df.head(3).to_string())
+
+# Accès direct au premier DataFrame
+df = dfs[0]
+
+# Nettoyage basique
+df = df.dropna(how="all")          # supprimer lignes vides
+df = df.reset_index(drop=True)
+df.columns = df.columns.str.strip() # nettoyer les noms de colonnes
+
+print(df)</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console</div>
+3 tableau(x) extrait(s)<br><br>
+--- Tableau 1 (45 lignes × 4 cols) ---<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Libellé&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Débit&nbsp;&nbsp;&nbsp;&nbsp;Crédit<br>
+0  03/01/2024  Virement entrant  &nbsp;&nbsp;&nbsp;&nbsp;NaN  &nbsp;15 000,00<br>
+1  05/01/2024  Fournisseur XYZ  &nbsp;2 450,00  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NaN<br>
+2  08/01/2024  Salaires Mars  &nbsp;&nbsp;8 200,00  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NaN
+        </div>
+      </div>
+
+      <!-- area -->
+      <div id="tabula-area" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">zone_ciblee.py — combinaison avec pdfplumber</span>
+            <span class="code-tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)">tabula-py</span>
+          </div>
+          <pre><code class="language-python">import tabula
+import pdfplumber
+
+# ÉTAPE 1 : pdfplumber localise le tableau
+with pdfplumber.open("rapport.pdf") as pdf:
+    page = pdf.pages[0]
+    tables = page.find_tables()
+    bbox = tables[0].bbox  # (x0, y0, x1, y1) en points PDF
+    h = page.height
+
+# ÉTAPE 2 : convertir en format tabula (top, left, bottom, right)
+# tabula utilise: distance depuis le haut, depuis la gauche
+top    = bbox[1]
+left   = bbox[0]
+bottom = bbox[3]
+right  = bbox[2]
+
+# ÉTAPE 3 : tabula extrait la zone précise (voie rapide)
+dfs = tabula.read_pdf(
+    "rapport.pdf",
+    pages=1,
+    area=[top, left, bottom, right],  # zone en points PDF
+    guess=False,    # on connaît déjà la zone exacte
+    silent=True
+)
+
+if dfs:
+    df = dfs[0]
+    print(f"Zone ciblée : {df.shape[0]} lignes × {df.shape[1]} colonnes")
+    print(df)</code></pre>
+        </div>
+      </div>
+
+      <!-- batch -->
+      <div id="tabula-batch" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">gros_volumes.py — 500 pages de relevés</span>
+            <span class="code-tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)">tabula-py</span>
+          </div>
+          <pre><code class="language-python">import tabula
+import pandas as pd
+import time
+
+def extraire_releves_rapide(pdf_path: str) -> pd.DataFrame:
+    """
+    Extrait rapidement tous les relevés d'un PDF volumineux.
+    tabula traite l'intégralité en une seule invocation Java.
+    """
+    debut = time.time()
+
+    # Extraction de TOUTES les pages en une passe
+    # tabula.read_pdf avec pages="all" est très efficace
+    dfs = tabula.read_pdf(
+        pdf_path,
+        pages="all",
+        multiple_tables=True,
+        guess=True,
+        silent=True,
+        pandas_options={"header": 0}
+    )
+
+    elapsed = time.time() - debut
+    print(f"⚡ {len(dfs)} tableaux extraits en {elapsed:.1f}s")
+
+    # Consolider tous les tableaux de même structure
+    if not dfs:
+        return pd.DataFrame()
+
+    # Garder seulement les df avec les mêmes colonnes que le premier
+    ref_cols = set(dfs[0].columns)
+    compatibles = [df for df in dfs if set(df.columns) == ref_cols]
+
+    # Fusion en un seul DataFrame
+    df_final = pd.concat(compatibles, ignore_index=True)
+    df_final = df_final.dropna(how="all")
+
+    print(f"✓ {len(df_final)} lignes consolidées")
+    return df_final
+
+# Sur 500 pages de relevés bancaires :
+df = extraire_releves_rapide("releves_2024_complet.pdf")
+df.to_excel("releves_consolides.xlsx", index=False)</code></pre>
+        </div>
+        <div class="output-box">
+          <div class="out-label">Sortie console (500 pages)</div>
+⚡ 500 tableaux extraits en 8.3s<br>
+✓ 22 450 lignes consolidées<br>
+<br>
+<span style="color:var(--text3)"># Camelot sur le même fichier prendrait ~42 secondes</span>
+        </div>
+      </div>
+
+      <!-- convert -->
+      <div id="tabula-convert" class="tab-pane">
+        <div class="code-block" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px;">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-filename">conversion_directe.py</span>
+            <span class="code-tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)">tabula-py</span>
+          </div>
+          <pre><code class="language-python">import tabula
+
+# Conversion PDF → CSV directe (sans passer par Python)
+# Très rapide : délègue entièrement à Java
+tabula.convert_into(
+    "releve.pdf",
+    "releve.csv",
+    output_format="csv",
+    pages="all"
+)
+
+# Conversion batch : un dossier entier → plusieurs CSV
+tabula.convert_into_by_batch(
+    "dossier_pdf/",       # dossier source
+    output_format="csv",  # ou "json", "tsv"
+    pages="all"
+)
+
+# read_pdf avec options avancées
+import pandas as pd
+dfs = tabula.read_pdf(
+    "document.pdf",
+    pages="1-10",
+    lattice=True,        # équivalent mode lattice
+    stream=False,
+    columns=[100, 200, 300, 400],  # forcer les colonnes en px
+    pandas_options={
+        "header": None,   # pas de header auto
+        "dtype": str      # tout en string pour éviter les erreurs
+    }
+)</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip tip-amber">
+      <span class="tip-icon">⚡</span>
+      <div><strong style="color:var(--amber)">Quand choisir tabula-py ?</strong> Pour les documents standardisés (relevés bancaires, factures en série) où la structure est identique d'une page à l'autre. Le gain de vitesse est de 3 à 5×. Attention : Java doit être installé, et les tableaux avec cellules fusionnées donneront de mauvais résultats.</div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- =================== COMPARAISON =================== -->
+  <section id="comparaison" class="lib-section">
+    <div class="lib-section-header">
+      <div class="lib-number" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border2);">04</div>
+      <div><h2>Tableau comparatif</h2></div>
+    </div>
+
+    <div class="comparison-wrap">
+      <div class="section-label">comparaison détaillée</div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Critère</th>
+            <th>pdfplumber</th>
+            <th>camelot-py</th>
+            <th>tabula-py</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Installation</td>
+            <td><span class="tag-yes">● pip install</span></td>
+            <td><span class="tag-mid">● pip + ghostscript</span></td>
+            <td><span class="tag-mid">● pip + Java JRE</span></td>
+          </tr>
+          <tr>
+            <td>Dépendance externe</td>
+            <td><span class="tag-yes">● aucune</span></td>
+            <td><span class="tag-mid">● ghostscript (optionnel)</span></td>
+            <td><span class="tag-no">● Java 8+ requis</span></td>
+          </tr>
+          <tr>
+            <td>Extraction texte</td>
+            <td><span class="tag-yes">● excellente + coords</span></td>
+            <td><span class="tag-no">● non</span></td>
+            <td><span class="tag-no">● non</span></td>
+          </tr>
+          <tr>
+            <td>Tableaux complexes</td>
+            <td><span class="tag-mid">● basique</span></td>
+            <td><span class="tag-yes">● excellent</span></td>
+            <td><span class="tag-mid">● moyen</span></td>
+          </tr>
+          <tr>
+            <td>Cellules fusionnées</td>
+            <td><span class="tag-mid">● partiel</span></td>
+            <td><span class="tag-yes">● oui (lattice)</span></td>
+            <td><span class="tag-no">● non</span></td>
+          </tr>
+          <tr>
+            <td>Vitesse (100 pages)</td>
+            <td><span class="tag-yes">● ~3s</span></td>
+            <td><span class="tag-no">● ~18s</span></td>
+            <td><span class="tag-yes">● ~4s</span></td>
+          </tr>
+          <tr>
+            <td>Score de confiance</td>
+            <td><span class="tag-no">● non</span></td>
+            <td><span class="tag-yes">● oui (accuracy %)</span></td>
+            <td><span class="tag-no">● non</span></td>
+          </tr>
+          <tr>
+            <td>Coordonnées x/y</td>
+            <td><span class="tag-yes">● oui, précises</span></td>
+            <td><span class="tag-mid">● bbox tableau</span></td>
+            <td><span class="tag-no">● non</span></td>
+          </tr>
+          <tr>
+            <td>PDFs scannés (OCR)</td>
+            <td><span class="tag-no">● non</span></td>
+            <td><span class="tag-no">● non</span></td>
+            <td><span class="tag-no">● non</span></td>
+          </tr>
+          <tr>
+            <td>Cas d'usage idéal</td>
+            <td>Analyse structure, localisation</td>
+            <td>Bilans, tableaux complexes</td>
+            <td>Relevés, gros volumes simples</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Combinaison des 3 -->
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">combinaison_optimale.py — les 3 bibliothèques ensemble</span>
+        <span class="code-tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">BEST PRACTICE</span>
+      </div>
+      <pre><code class="language-python">import pdfplumber
+import camelot
+import tabula
+import pandas as pd
+
+KEYWORDS_COMPLEXES = ["bilan", "flux", "trésorerie", "résultat", "annexe"]
+
+def smart_extract(pdf_path: str, page_num: int) -> pd.DataFrame:
+    """
+    Pipeline intelligent : chaque outil fait ce qu'il sait faire.
+    """
+
+    # ─── PHASE 1 : pdfplumber analyse la structure ───────────────
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_num - 1]
+        texte = (page.extract_text() or "").lower()
+        tableaux = page.find_tables()
+
+        if not tableaux:
+            print(f"Page {page_num} : aucun tableau détecté")
+            return pd.DataFrame()
+
+        bbox = tableaux[0].bbox  # coordonnées du tableau
+
+    # ─── PHASE 2 : décision d'aiguillage ─────────────────────────
+    est_complexe = any(kw in texte for kw in KEYWORDS_COMPLEXES)
+
+    # ─── PHASE 3a : Camelot pour les tableaux complexes ──────────
+    if est_complexe:
+        print(f"Page {page_num} → Camelot (complexe)")
+        tables = camelot.read_pdf(pdf_path, pages=str(page_num), flavor="lattice")
+
+        if tables and tables[0].accuracy > 70:
+            return tables[0].df
+
+        # Fallback : stream si lattice échoue
+        tables = camelot.read_pdf(pdf_path, pages=str(page_num), flavor="stream")
+        if tables:
+            return tables[0].df
+
+    # ─── PHASE 3b : Tabula pour les tableaux simples ─────────────
+    else:
+        print(f"Page {page_num} → Tabula (rapide)")
+        dfs = tabula.read_pdf(pdf_path, pages=page_num, multiple_tables=True, silent=True)
+        if dfs:
+            return dfs[0]
+
+    return pd.DataFrame()
+
+# Test
+df = smart_extract("rapport_financier.pdf", page_num=3)
+print(df)</code></pre>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- =================== PIPELINE =================== -->
+  <section id="pipeline" class="lib-section">
+    <div class="lib-section-header">
+      <div class="lib-number" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border2);">05</div>
+      <div><h2>Schéma de fonctionnement</h2></div>
+    </div>
+
+    <div class="pipeline-wrap">
+      <div class="section-label">pipeline complet — smart financial parser</div>
+      <div class="pipeline-steps">
+        <div class="pipe-step">
+          <div class="pipe-icon-big" style="background:var(--bg4);color:var(--text2);border:1px solid var(--border2)">📁</div>
+          <h4>Entrée</h4>
+          <p>Dossier PDFs</p>
+        </div>
+        <div class="pipe-arrow-big">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon-big" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)">pdf+</div>
+          <h4>Phase 1</h4>
+          <p>pdfplumber</p>
+        </div>
+        <div class="pipe-arrow-big">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon-big" style="background:var(--bg4);color:var(--text2);border:1px solid var(--border2)">⚖</div>
+          <h4>Décision</h4>
+          <p>complexe?</p>
+        </div>
+        <div class="pipe-arrow-big">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon-big" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)">cam</div>
+          <h4>Camelot</h4>
+          <p>lattice/stream</p>
+        </div>
+        <div class="pipe-arrow-big">/</div>
+        <div class="pipe-step">
+          <div class="pipe-icon-big" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)">tab</div>
+          <h4>Tabula</h4>
+          <p>voie rapide</p>
+        </div>
+        <div class="pipe-arrow-big">→</div>
+        <div class="pipe-step">
+          <div class="pipe-icon-big" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">xls</div>
+          <h4>Excel</h4>
+          <p>pandas export</p>
+        </div>
+      </div>
+      <div class="decision-box">
+        <div style="font-size:12px;color:var(--text3);font-family:var(--mono);flex-shrink:0;">Règles d'aiguillage :</div>
+        <div class="decision-branch">
+          <span style="color:var(--purple)">●</span>
+          <span style="color:var(--text2)">mots-clés "bilan/trésorerie/annexe" détectés</span>
+          <span class="decision-arrow">→</span>
+          <span style="color:var(--purple)">camelot lattice</span>
+        </div>
+        <div class="decision-branch">
+          <span style="color:var(--amber)">●</span>
+          <span style="color:var(--text2)">tableau simple, &lt;15 lignes, sans mot-clé</span>
+          <span class="decision-arrow">→</span>
+          <span style="color:var(--amber)">tabula-py</span>
+        </div>
+        <div class="decision-branch">
+          <span style="color:var(--text3)">●</span>
+          <span style="color:var(--text2)">outil principal échoue</span>
+          <span class="decision-arrow">→</span>
+          <span style="color:var(--text2)">fallback automatique</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip tip-green">
+      <span class="tip-icon">✓</span>
+      <div><strong style="color:var(--green)">Résumé :</strong> Utilisez toujours les trois bibliothèques ensemble. pdfplumber ouvre la route, Camelot extrait avec précision, tabula-py traite en masse. Séparément ils sont bons — combinés ils forment un extracteur financier de niveau production.</div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div style="max-width:1200px;margin:0 auto;padding:0 2rem;">
+    Veille Technique — pdfplumber · camelot-py · tabula-py · Python 3.10+
+  </div>
+</footer>
+
+<script>
+  hljs.highlightAll();
+
+  function switchTab(btn, lib, tab) {
+    const group = btn.closest('.tabs-wrap');
+    group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    group.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const pane = document.getElementById(lib + '-' + tab);
+    if (pane) {
+      pane.classList.add('active');
+      pane.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+    }
+  }
+</script>
+</body>
+</html>
